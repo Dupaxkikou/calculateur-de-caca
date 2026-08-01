@@ -1,10 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { readWeightFromCanvas } from '../lib/ocr';
+import { readWeightFromCanvas, preloadOcr } from '../lib/ocr';
 
-// Zone de cadrage normalisée où l'utilisateur doit placer l'écran
-// de la balance. Un rectangle centré, large, pas trop haut.
 const SCAN_ZONE = { left: 0.12, top: 0.4, width: 0.76, height: 0.18 };
 
 export default function CameraCapture({ label, onConfirmed }) {
@@ -14,13 +12,19 @@ export default function CameraCapture({ label, onConfirmed }) {
   const loopRef = useRef(null);
   const busyRef = useRef(false);
   const recentRef = useRef([]);
+  const ocrReadyRef = useRef(false);
+  const cameraReadyRef = useRef(false);
 
-  const [hint, setHint] = useState('Place la balance dans le cadre…');
+  const [hint, setHint] = useState('Préparation de la reconnaissance…');
   const [confirmedWeight, setConfirmedWeight] = useState(null);
   const [cameraError, setCameraError] = useState(null);
 
   useEffect(() => {
     startCamera();
+    preloadOcr().then(() => {
+      ocrReadyRef.current = true;
+      maybeStartLoop();
+    });
     return () => stopCamera();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -36,11 +40,19 @@ export default function CameraCapture({ label, onConfirmed }) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      startLoop();
+      cameraReadyRef.current = true;
+      maybeStartLoop();
     } catch (err) {
       setCameraError(
         "Impossible d'accéder à la caméra. Vérifie les autorisations du navigateur."
       );
+    }
+  }
+
+  function maybeStartLoop() {
+    if (cameraReadyRef.current && ocrReadyRef.current) {
+      setHint('Place la balance dans le cadre…');
+      startLoop();
     }
   }
 
@@ -50,7 +62,7 @@ export default function CameraCapture({ label, onConfirmed }) {
   }
 
   function startLoop() {
-    loopRef.current = setInterval(captureAndRead, 900);
+    loopRef.current = setInterval(captureAndRead, 600);
   }
 
   async function captureAndRead() {
@@ -97,8 +109,7 @@ export default function CameraCapture({ label, onConfirmed }) {
   function retry() {
     recentRef.current = [];
     setConfirmedWeight(null);
-    setHint('Place la balance dans le cadre…');
-    startLoop();
+    maybeStartLoop();
   }
 
   return (
