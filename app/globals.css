@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  background: #F7F9F8;
+  color: #141A17;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.big-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 64px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 17px;
+  width: 100%;
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+.big-btn:active {
+  transform: scale(0.97);
+}
+.big-btn-primary {
+  background: #2ECC71;
+  color: white;
+}
+.big-btn-outline {
+  background: white;
+  color: #141A17;
+  border: 1.5px solid #E0E4E2;
+}
+
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 20px;
+}
